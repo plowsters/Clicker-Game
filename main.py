@@ -74,7 +74,7 @@ def calcStockVal(stockName):
     trendUpwards = True
     #Gives stock an 80% chance to go up until it reaches $75
     if random.uniform(0, 1) < 0.8:
-      tempA += tempA**multiplier
+      tempA += (tempA**multiplier) + random.uniform(0, 30)
     else:
       tempA -= tempA**multiplier
     if tempA >= 75:
@@ -123,8 +123,15 @@ def invest(vaultParam, stockPrice, numShares, stockName):
   if cancelTransaction == 0:
     return
   vault = "${:.2f}".format(tempA)
+  vaultLabel.config(text="Vault: " + str(vault))
   numShares += 1
   Shares[stockName] = numShares
+  if sharesLabels:
+    sharesLabels[0].config(text=str(Shares["GME"]))
+    sharesLabels[1].config(text=str(Shares["AAPL"]))
+    sharesLabels[2].config(text=str(Shares["AMZN"]))
+    sharesLabels[3].config(text=str(Shares["TSLA"]))
+    sharesLabels[4].config(text=str(Shares["MSFT"]))
   firstInvest = True
   return
   print(vault)
@@ -137,8 +144,15 @@ def withdraw(vaultParam, stockPrice, numShares, stockName):
     return
   numShares -= 1
   Shares[stockName] = numShares
+  if sharesLabels:
+    sharesLabels[0].config(text=str(Shares["GME"]))
+    sharesLabels[1].config(text=str(Shares["AAPL"]))
+    sharesLabels[2].config(text=str(Shares["AMZN"]))
+    sharesLabels[3].config(text=str(Shares["TSLA"]))
+    sharesLabels[4].config(text=str(Shares["MSFT"]))
   tempA = eval(vaultParam.replace('$', '') + " + " + str(stockPrice.replace('$', '')))
   vault = "${:.2f}".format(tempA)
+  vaultLabel.config(text="Vault: " + str(vault))
 
 def insidertrade(clickCounter):
   global numClicks
@@ -155,24 +169,58 @@ def main():
   window = tk.Tk()
   window.title("Your Retirement Fund")
   window.geometry("500x500")
-  sFrame1 = Frame(window, bg = "red")
+  global sharesLabels
   global stockLabels
+  sFrame = Frame(window)
+  stockInfoFrame1 = Frame(sFrame, bg = "blue")
+  sharesLabels = [
+    Label(stockInfoFrame1, text=str(Shares["GME"]), height = 2, bg = "blue"),
+    Label(stockInfoFrame1, text=str(Shares["AAPL"]), height = 2, bg = "blue"),
+    Label(stockInfoFrame1, text=str(Shares["AMZN"]), height = 2, bg = "blue"),
+    Label(stockInfoFrame1, text=str(Shares["TSLA"]), height = 2, bg = "blue"),
+    Label(stockInfoFrame1, text=str(Shares["MSFT"]), height = 2, bg = "blue")
+  ]
+  for label in sharesLabels:
+    label.pack(side = TOP)
+  stockInfoFrame1.pack(side = LEFT)
+
+  stockInfoFrame2 = Frame(sFrame, bg = "red")
   stockLabels = [
-    Label(sFrame1, text="GME: " + Stocks["GME"], bg = "red"),
-    Label(sFrame1, text="AAPL: " + Stocks["AAPL"], bg = "red"),
-    Label(sFrame1, text="AMZN: " + Stocks["AMZN" ], bg = "red"),
-    Label(sFrame1, text="TSLA: " + Stocks["TSLA"], bg = "red"),
-    Label(sFrame1, text="MSFT: " + Stocks["MSFT"], bg = "red")
+    Label(stockInfoFrame2, text="GME: " + Stocks["GME"], height = 2, bg = "red"),
+    Label(stockInfoFrame2, text="AAPL: " + Stocks["AAPL"], height = 2, bg = "red"),
+    Label(stockInfoFrame2, text="AMZN: " + Stocks["AMZN" ], height = 2, bg = "red"),
+    Label(stockInfoFrame2, text="TSLA: " + Stocks["TSLA"], height = 2, bg = "red"),
+    Label(stockInfoFrame2, text="MSFT: " + Stocks["MSFT"], height = 2, bg = "red")
   ]
   for label in stockLabels:
-    label.pack()
-  sFrame1.pack()
-  
-  w = Canvas(window, width=300, height=200)
+    label.pack(side = TOP)
+  stockInfoFrame2.pack(side = LEFT)
+  w = Canvas(sFrame, width=300, height=170, bg="#292354")
 
-  w.pack(side = TOP )
+  w.pack(side = LEFT )
+  sFrame.pack(side = TOP )
+  #global sharesLabels
+  #sFrame2 = Frame(window, bg = "blue")
+  #sharesLabels = [
+  #  Label(sFrame2, text=str(Shares["GME"]), bg = "blue"),
+  #  Label(sFrame2, text=str(Shares["AAPL"]), bg = "blue"),
+  #  Label(sFrame2, text=str(Shares["AMZN"]), bg = "blue"),
+  #  Label(sFrame2, text=str(Shares["TSLA"]), bg = "blue"),
+  #  Label(sFrame2, text=str(Shares["MSFT"]), bg = "blue")
+  #]
+  #for label in sharesLabels:
+  #  label.pack()
+  #sFrame2.pack(side = TOP )
+
+  buttonFrame = Frame(window)
+  #Insider Trading Button
+  frame1 = Frame(buttonFrame)
+  global vaultLabel
+  vaultLabel = Label(frame1, text="Vault: " + str(vault), bg = "yellow")
+  vaultLabel.pack(side = TOP )
+  itrade = tk.Button(frame1, text='Insider Trading', height = 5, width = 15, command = lambda: insidertrade(numClicks))
+  itrade.pack(side = TOP)
   #Buy and sell GME stocks
-  frame1 = Frame(window)
   investGME = tk.Button(frame1, text = 'Buy GME', fg = 'red', command = lambda: invest(vault, Stocks["GME"], Shares["GME"], "GME"))
   investGME.pack( side = TOP)
   divestGME = tk.Button(frame1, text = 'Sell GME', fg = 'blue', command = lambda: withdraw(vault, Stocks["GME"], Shares["GME"], "GME"))
@@ -180,7 +228,7 @@ def main():
   frame1.pack( side = TOP )
 
   #Buy and sell AAPL and AMZN stocks
-  frame2 = Frame(window)
+  frame2 = Frame(buttonFrame)
   investAAPL = tk.Button(frame2, text = 'Buy AAPL', fg = 'red', command = lambda: invest(vault, Stocks["AAPL"], Shares["AAPL"], "AAPL"))
   investAAPL.pack( side = TOP )
   divestAAPL = tk.Button(frame2, text = 'Sell AAPL', fg = 'blue' , command = lambda: withdraw(vault, Stocks["AAPL"], Shares["AAPL"], "AAPL"))
@@ -189,10 +237,9 @@ def main():
   investAMZN.pack( side = TOP )
   divestAMZN = tk.Button(frame2, text = 'Sell AMZN', fg = 'blue' , command = lambda: withdraw(vault, Stocks["AMZN"], Shares["AMZN"], "AMZN"))
   divestAMZN.pack( side = TOP )
-  frame2.pack( side = RIGHT )
-
+  frame2.pack( side = LEFT )
   #Buy and sell TSLA and MSFT stocks
-  frame3 = Frame(window)
+  frame3 = Frame(buttonFrame)
   investTSLA = tk.Button(frame3, text = 'Buy TSLA', fg = 'red', command = lambda: invest(vault, Stocks["TSLA"], Shares["TSLA"], "TSLA"))
   investTSLA.pack( side = TOP)
   divestTSLA = tk.Button(frame3, text = 'Sell TSLA', fg = 'blue', command = lambda: withdraw(vault, Stocks["TSLA"], Shares["TSLA"], "TSLA"))
@@ -201,13 +248,9 @@ def main():
   investMSFT.pack( side = TOP)
   divestMSFT = tk.Button(frame3, text = 'Sell MSFT', fg = 'blue', command = lambda: withdraw(vault, Stocks["MSFT"], Shares["MSFT"], "MSFT"))
   divestMSFT.pack( side = TOP)
-  frame3.pack( side = LEFT )
+  frame3.pack( side = RIGHT )
+  buttonFrame.pack(side = BOTTOM )
 
-  #Insider Trading Button
-  frame4 = Frame(window)
-  itrade = tk.Button(window, text='Insider Trading', height = 5, width = 15, command = lambda: insidertrade(numClicks))
-  itrade.pack()
-  frame4.pack( side = TOP )
   window.mainloop()
 
 #Call main() function
