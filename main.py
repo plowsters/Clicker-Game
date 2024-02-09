@@ -18,8 +18,6 @@ numClicks = 0
 #Failsafe for updateStocks() bug
 global firstInvest
 firstInvest = False
-global secondInvest
-secondInvest = False
 
 #Dictionary containing the names and initial values of stocks
 global Stocks
@@ -154,6 +152,60 @@ def withdraw(vaultParam, stockPrice, numShares, stockName):
   vault = "${:.2f}".format(tempA)
   vaultLabel.config(text="Vault: " + str(vault))
 
+def drawGraph(canvas, data):
+  # Clear the canvas
+  canvas.delete("all")
+
+  # Draw the axis for each graph
+  for i in range(6):
+    y_offset =  i * 33
+    canvas.create_line(5, y_offset+3, 300, y_offset+3, width=1, fill='white')  # X-axis
+    canvas.create_line(5, y_offset+40, 5, y_offset+3, width=1, fill='white')  #Y-axis
+
+# Draw the data points for each graph
+  for i, dataset in enumerate(data):
+    x1, y1 = 30, 120 + i * 30  # Starting point
+    for j in range(1, len(dataset)):
+        x2 = 30 + j * 10  # Horizontal spacing
+        y2 = 120 + i * 30 - dataset['value']  # Vertical position
+        canvas.create_line(x1, y1, x2, y2, width=2, fill='blue')
+        x1, y1 = x2, y2
+
+def update_graphs(canvas, data):
+  # Define canvas dimensions
+  canvas_width = 300
+  canvas_height = 170
+  margin = 10
+  
+  # Calculate data point intervals
+  num_points = len(data)
+  x_interval = (canvas_width - 2 * margin) / (num_points - 1)
+  max_price = max([d['value'] for d in data])
+  min_price = min([d['value'] for d in data])
+  price_range = max_price - min_price
+  y_scale = (canvas_height - 2 * margin) / price_range
+
+  # Plot the line graph
+  prev_x = margin
+  prev_y = canvas_height - margin - (data[0]['value'] - min_price) * y_scale
+  for i in range(1, num_points):
+      x = margin + i * x_interval
+      y = canvas_height - margin - (data[i]['value'] - min_price) * y_scale
+      canvas.create_line(prev_x, prev_y, x, y, fill="blue", width=2, tags="line_graph")
+      prev_x = x
+      prev_y = y
+
+  # Create a new line segment if the direction changes
+  if (data[i]['value'] > data[i-1]['value'] and data[i-1]['value'] <= data[i-2]['value']) or \
+     (data[i]['value'] < data[i-1]['value'] and data[i-1]['value'] >= data[i-2]['value']):
+      prev_x = x
+      prev_y = y
+
+  # Draw line segment
+  canvas.create_line(prev_x, prev_y, x, y, fill="blue", width=2, tags="line_graph")
+  prev_x = x
+  prev_y = y
+
 def insidertrade(clickCounter):
   global numClicks
   clickCounter += 1
@@ -195,22 +247,19 @@ def main():
   for label in stockLabels:
     label.pack(side = TOP)
   stockInfoFrame2.pack(side = LEFT)
+  
   w = Canvas(sFrame, width=300, height=170, bg="#292354")
+  
+  stock_values = []
+  for stock_price in Stocks.values():
+      stock_values.append(float(stock_price.replace("$", "").replace(",", "")))
 
+  data = [{'value': value} for value in stock_values]
+  drawGraph(w, data)
+  graphThread = threading.Thread(target=update_graphs, args=(w, data))
+  graphThread.start()
   w.pack(side = LEFT )
   sFrame.pack(side = TOP )
-  #global sharesLabels
-  #sFrame2 = Frame(window, bg = "blue")
-  #sharesLabels = [
-  #  Label(sFrame2, text=str(Shares["GME"]), bg = "blue"),
-  #  Label(sFrame2, text=str(Shares["AAPL"]), bg = "blue"),
-  #  Label(sFrame2, text=str(Shares["AMZN"]), bg = "blue"),
-  #  Label(sFrame2, text=str(Shares["TSLA"]), bg = "blue"),
-  #  Label(sFrame2, text=str(Shares["MSFT"]), bg = "blue")
-  #]
-  #for label in sharesLabels:
-  #  label.pack()
-  #sFrame2.pack(side = TOP )
 
   buttonFrame = Frame(window)
   #Insider Trading Button
